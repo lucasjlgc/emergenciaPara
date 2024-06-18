@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Platform,
   View,
   Image,
   Text,
@@ -9,10 +10,48 @@ import {
   StyleSheet
 } from "react-native";
 
+import * as Device from "expo-device";
+import * as Location from "expo-location";
+
+import { useState, useEffect } from "react";
+
 const Trauma = ()=> {
-  const handle = () => {
-    Alert.alert("Button Pressed!", "You pressed the button.");
+
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null
+  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleLocation = async () => {
+    if (Platform.OS === "android" && !Device.isDevice) {
+      setErrorMsg("Houve erro");
+      return;
+    }
+
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Houve outro erro");
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    setLocation(location);
   };
+
+  let text = "Esperando...";
+  let text2 = "Esperando...";
+  
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text2 = JSON.stringify(location.coords.latitude);
+    text = JSON.stringify(location.coords.longitude);
+  }
+
+  Alert.alert(
+    "Localização enviada com sucesso para SAMU!",
+    "Latitude: " + text2 + "\nLongitude: " + text
+  );
 
   return (
     <View style={styles.container}>
@@ -46,14 +85,14 @@ const Trauma = ()=> {
 
       <View style={styles.secaoInferior}>
         <View style={styles.camadaInferior2}>
-          <TouchableOpacity style={styles.botaoInferior} onPress={handle}>
+          <TouchableOpacity style={styles.botaoInferior} onPress={handleLocation}>
             <Image
               style={styles.iconeInferior}
               source={require("../assets/images/help.png")}
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.botaoInferior} onPress={handle}>
+          <TouchableOpacity style={styles.botaoInferior} onPress={handleLocation}>
             <Image
               style={styles.iconeInferior}
               source={require("../assets/images/video.png")}
